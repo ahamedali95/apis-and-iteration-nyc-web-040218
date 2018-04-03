@@ -1,33 +1,56 @@
-require 'rest-client'
+rrequire 'rest-client'
 require 'json'
 require 'pry'
 
 def get_character_movies_from_api(character)
-  #make the web request
   all_characters = RestClient.get('http://www.swapi.co/api/people/')
   character_hash = JSON.parse(all_characters)
-  
-  # iterate over the character hash to find the collection of `films` for the given
-  #   `character`
-  # collect those film API urls, make a web request to each URL to get the info
-  #  for that film
-  # return value of this method should be collection of info about each film.
-  #  i.e. an array of hashes in which each hash reps a given film
-  # this collection will be the argument given to `parse_character_movies`
-  #  and that method will do some nice presentation stuff: puts out a list
-  #  of movies by title. play around with puts out other info about a given film.
-end
 
-def parse_character_movies(films_hash)
-  # some iteration magic and puts out the movies in a nice list
+    character_hash["results"].each do |characterHash|
+      if characterHash["name"] == format_string(character)
+        films = characterHash["films"]
+        return films
+      elsif characterHash["name"] == character.upcase
+        films = characterHash["films"]
+        return films
+      else
+        return nil
+      end
+    end
 end
 
 def show_character_movies(character)
-  films_hash = get_character_movies_from_api(character)
-  parse_character_movies(films_hash)
+  json_apis = get_character_movies_from_api(character)
+  all_titles = []
+
+  if json_apis == nil
+    return "ERROR - enter a real character."
+  end
+
+  json_apis.each do |json_api|
+    film_hash = json_api_to_hash(json_api)
+    all_titles << film_hash["title"]
+  end
+
+  all_titles
 end
 
-## BONUS
+def json_api_to_hash(json_api)
+  films = RestClient.get(json_api)
+  JSON.parse(films)
+end
 
-# that `get_character_movies_from_api` method is probably pretty long. Does it do more than one job?
-# can you split it up into helper methods?
+def format_string(string)
+  formatted_string = ""
+
+  names = string.split(" ")
+  names.each_with_index do |name, index|
+    if index == names.length - 1
+      formatted_string += name[0].capitalize() + name.slice(1, name.length)
+    else
+      formatted_string += name[0].capitalize() + name.slice(1, name.length) + " "
+    end
+  end
+
+    formatted_string
+end
