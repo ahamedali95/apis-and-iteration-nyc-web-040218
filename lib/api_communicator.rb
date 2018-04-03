@@ -1,39 +1,47 @@
-rrequire 'rest-client'
+require 'rest-client'
 require 'json'
 require 'pry'
+require_relative "../lib/command_line_interface.rb"
 
 def get_character_movies_from_api(character)
-  all_characters = RestClient.get('http://www.swapi.co/api/people/')
-  character_hash = JSON.parse(all_characters)
+  counter = 1
 
-    character_hash["results"].each do |characterHash|
-      if characterHash["name"] == format_string(character)
-        films = characterHash["films"]
-        return films
-      elsif characterHash["name"] == character.upcase
-        films = characterHash["films"]
-        return films
-      else
-        return nil
+  while counter < 10
+    all_characters = RestClient.get("http://www.swapi.co/api/people/?page=#{counter}")
+    character_hash = JSON.parse(all_characters)
+
+      character_hash["results"].each do |characterHash|
+        if characterHash["name"] == format_string(character)
+          films = characterHash["films"]
+          return films
+        elsif characterHash["name"] == character.upcase
+          films = characterHash["films"]
+          return films
+        end
       end
-    end
+
+      counter += 1
+  end
+
+  return nil
 end
+
+
 
 def show_character_movies(character)
   json_apis = get_character_movies_from_api(character)
-  all_titles = []
 
   if json_apis == nil
-    return "ERROR - enter a real character."
+    puts "ERROR - enter a real character."
+    return repeat()
   end
 
-  json_apis.each do |json_api|
+  json_apis.map do |json_api|
     film_hash = json_api_to_hash(json_api)
-    all_titles << film_hash["title"]
+    film_hash["title"]
   end
-
-  all_titles
 end
+
 
 def json_api_to_hash(json_api)
   films = RestClient.get(json_api)
@@ -53,4 +61,9 @@ def format_string(string)
   end
 
     formatted_string
+end
+
+def repeat()
+  character = get_character_from_user()
+  puts show_character_movies(character)
 end
